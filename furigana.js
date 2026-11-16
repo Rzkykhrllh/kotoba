@@ -60,7 +60,7 @@
     if (ours.has(node) || !KANJI_RE.test(node.data)) return false;
     const p = node.parentElement;
     if (!p || SKIP_TAGS.has(p.tagName.toUpperCase())) return false;
-    if (p.closest("ruby, pre, code, textarea, [contenteditable=''], [contenteditable='true'], [translate='no']")) return false;
+    if (p.closest("ruby, pre, code, textarea, [contenteditable=''], [contenteditable='true']")) return false;
     return true;
   }
 
