@@ -23,7 +23,7 @@
   <main>
     <a href="./">← Kotoba</a>
     <h1>Privacy Policy</h1>
-    <p class="meta">Last updated: November 9, 2026</p>
+    <p class="meta">Last updated: November 16, 2026</p>
 
     <p>Kotoba is a Chrome extension for learning Japanese vocabulary. It is built to work entirely
       inside your browser. This page explains what it stores and what it does with page content.</p>
@@ -35,6 +35,7 @@
     <h2>What is stored on your device</h2>
     <ul>
       <li>Your words, collections, notes and review progress, in the browser's IndexedDB.</li>
+      <li>The furigana dictionary, if you downloaded it, in its own IndexedDB database.</li>
       <li>Your settings (theme, card position, reader preferences, the current Study session), in
         <code>chrome.storage.local</code>.</li>
     </ul>
@@ -45,15 +46,19 @@
     <p>To show flashcards and highlight words you've saved, the extension runs on the pages you visit
       (the "Read and change all your data on all websites" permission). It reads the visible text of the
       page <b>locally</b> to find Japanese words that are in your bank. Page text is never stored, logged
-      or sent anywhere, and the page itself is not modified: highlights are drawn with the browser's
+      or sent anywhere, and highlighting does not modify the page: highlights are drawn with the browser's
       CSS Highlight API.</p>
+    <p>If you turn on <b>Furigana on pages</b> (off by default), Japanese text near the part of the page
+      you're viewing is split into words on your computer, and small readings are added above the kanji.
+      This is also done locally; the text is not stored or sent anywhere. Turning it off restores the page.</p>
 
     <h2>Network requests</h2>
     <ul>
       <li>The Kotoba page loads a font (Zen Maru Gothic) from Google Fonts.</li>
       <li>Optional Google Sheets sync (currently hidden) fetches only the sheet URL you enter.</li>
-      <li>Future versions may download a dictionary file once from this project's GitHub Releases. No
-        personal data is sent with that request.</li>
+      <li>When you turn on Furigana on pages, a dictionary (about 18 MB) is downloaded once from this
+        project's GitHub Releases and kept in the browser. No personal data or page text is sent with that
+        request. You can remove it from Settings.</li>
     </ul>
 
     <h2>Permissions</h2>

@@ -11,7 +11,7 @@ Each version builds on the previous one and ships on its own.
 |---|---|---|
 | **v1** | Kotoba — word bank + popup flashcards | ✅ Done |
 | **v2** | Reader — highlight words you've collected on any web page | 🟡 Built, in testing (`feature/reader-highlight`) |
-| **v3** | Furigana helper — hover any word for reading + meaning | ⬜ Next |
+| **v3** | Furigana on pages — readings above kanji on any page | 🟡 Built, in testing (`feature/furigana`) |
 | **v4** | Sentence mining — add words from the web in one click | ⬜ Planned |
 | **v5** | Polish — shortcuts, per-site rules, stats | ⬜ Planned |
 | **Release** | Public release track (runs alongside v2–v3) | ⬜ Planned |
@@ -92,30 +92,35 @@ Each version builds on the previous one and ships on its own.
 
 ---
 
-## v3 — Furigana helper: hover any word ⬜
+## v3 — Furigana on pages 🟡
 
-**Goal:** never get stuck on a kanji. Hover **any** word — collected or not — and see how it's
-read and what it means.
+**Goal:** never get stuck on a kanji. Switch it on and every kanji on the page gets its reading
+above it, in context.
 
 ### Requirements
-- R3.1 **Dictionary**: JMdict (EDRDG, CC BY-SA 4.0), compacted to a `.json.gz`, downloaded once on
-  first use from the project's GitHub Release, stored in IndexedDB. Settings shows size, version,
-  download progress, and *Update / Remove*.
-- R3.2 **Hover anywhere** on Japanese text: find the longest dictionary word starting at the
-  cursor and show reading (furigana) + English meanings (top senses) + part of speech.
-- R3.3 **Deinflection**: conjugated verbs/adjectives resolve to their dictionary form
-  (行った → 行く, 食べられない → 食べる, 美しかった → 美しい) and the card says which form it was.
-- R3.4 If the word is in the bank, the card shows **your** meaning and status first, dictionary second.
-- R3.5 Kanji breakdown per character (on/kun from KANJIDIC2) inside the card.
-- R3.6 Lookups are fast: < 30 ms per hover on a mid-range laptop; the dictionary never loads into
-  the page itself (lookups go through the background service worker).
-- R3.7 Without the dictionary downloaded, v2 behaviour is unchanged and the card offers the download.
+- R3.1 **Tokenizer**: kuromoji.js (Apache 2.0) + mecab-ipadic, runs in the background service
+  worker. Readings come from the sentence, so 今日 → きょう and 行った → い.
+- R3.2 **Dictionary**: ~18 MB gzipped, not in the extension zip. Downloaded once on first use from
+  the GitHub Release `dict-ipadic-v1`, stored in IndexedDB (`kotobaDict`). Settings shows status,
+  size and progress, with *Download / Remove*.
+- R3.3 Readings go only over the kanji, never over okurigana (食<rt>た</rt>べる).
+- R3.4 Pages are changed (real `<ruby>` elements), but turning it off puts back the original text
+  nodes, so the page is exactly as before.
+- R3.5 Only text near the viewport is processed; new content (infinite scroll, SPAs) is picked up.
+- R3.6 Skipped: existing `<ruby>`, form fields, editable areas, `code`/`pre`.
+- R3.7 Readings are excluded when copying text.
+- R3.8 Works with the v2 highlights: bank words stay underlined and keep their hover card.
 
 ### Done when
-- [ ] Hovering 日本 on ja.wikipedia.org shows にほん / にっぽん + "Japan".
-- [ ] Deinflection test table (≥ 40 forms) passes.
-- [ ] Lookup timing measured and under budget.
-- [ ] Attribution for JMdict and KANJIDIC2 shown in Settings → About and in the README.
+- [x] Readings correct on a test paragraph (今日, 行った, 映画館, 三ヶ月) and on ja.wikipedia.org.
+- [x] Turning it off restores the page HTML byte for byte.
+- [x] Highlights + furigana together: 映画館 underlined across 映画|館 ruby pieces, hover card works.
+- [ ] Attribution for kuromoji / mecab-ipadic in Settings and README (done) and NOTICE in the dict release.
+
+### Later
+- Hover any word (not just bank words) for its meaning, via JMdict. Would also feed v4's
+  *Add to Kotoba*.
+- Option to hide furigana on words you've mastered.
 
 ---
 

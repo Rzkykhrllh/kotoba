@@ -370,6 +370,7 @@ const readerIgnoreClear    = el("readerIgnoreClear");
 
 function renderReaderSettings(settings) {
   readerHighlightInput.checked = settings.readerHighlight !== false;
+  el("pageFurigana").checked = !!settings.pageFurigana; // (by id: this runs before the furigana block below is evaluated)
   const statuses = settings.readerStatuses || ["new", "learning", "mastered"];
   readerStatusInputs.forEach((cb) => { cb.checked = statuses.includes(cb.value); });
   const n = (settings.readerIgnore || []).length;
@@ -388,6 +389,68 @@ readerIgnoreClear.addEventListener("click", async () => {
   const { settings } = await send({ type: "updateSettings", patch: { readerIgnore: [] } });
   renderReaderSettings(settings);
 });
+
+/* --------------------------- furigana on pages --------------------------- */
+// The dictionary download runs in background.js (core/furigana-dict.js) and
+// reports through chrome.storage.local "furiganaDict"; furigana.js in every
+// tab starts by itself once it's ready.
+const pageFuriganaInput = el("pageFurigana");
+const furiDictLabel = el("furiDictLabel");
+const furiDictBtn = el("furiDictBtn");
+const furiProgress = el("furiProgress");
+const furiProgressFill = el("furiProgressFill");
+let furiDict = { state: "none" };
+
+function renderFuriDict() {
+  const st = furiDict.state;
+  const mb = (b) => `${(b / 1048576).toFixed(1)} MB`;
+  delete furiDictLabel.dataset.tone;
+  furiProgress.hidden = st !== "downloading";
+  furiDictBtn.disabled = st === "downloading";
+  if (st === "ready") {
+    furiDictLabel.textContent = `Dictionary: installed · ${mb(furiDict.bytes || 0)}`;
+    furiDictBtn.textContent = "Remove";
+  } else if (st === "downloading") {
+    const pct = Math.round((furiDict.progress || 0) * 100);
+    furiDictLabel.textContent = `Dictionary: downloading… ${pct}%`;
+    furiProgressFill.style.width = `${pct}%`;
+    furiDictBtn.textContent = "Downloading…";
+  } else if (st === "error") {
+    furiDictLabel.textContent = furiDict.error || "Download failed.";
+    furiDictLabel.dataset.tone = "error";
+    furiDictBtn.textContent = "Try again";
+  } else {
+    furiDictLabel.textContent = "Dictionary: not downloaded";
+    furiDictBtn.textContent = "Download";
+  }
+}
+
+async function loadFuriDict() {
+  furiDict = (await send({ type: "furiganaStatus" })) || { state: "none" };
+  renderFuriDict();
+}
+
+pageFuriganaInput.addEventListener("change", async () => {
+  await send({ type: "updateSettings", patch: { pageFurigana: pageFuriganaInput.checked } });
+  if (pageFuriganaInput.checked && furiDict.state !== "ready" && furiDict.state !== "downloading") send({ type: "furiganaDownload" });
+});
+
+furiDictBtn.addEventListener("click", async () => {
+  if (furiDict.state === "ready") {
+    await send({ type: "furiganaRemove" });
+    pageFuriganaInput.checked = false;
+  } else {
+    send({ type: "furiganaDownload" });
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+  if (changes.furiganaDict) { furiDict = changes.furiganaDict.newValue || { state: "none" }; renderFuriDict(); }
+  if (changes.settings && changes.settings.newValue) pageFuriganaInput.checked = !!changes.settings.newValue.pageFurigana;
+});
+
+loadFuriDict();
 
 showFurigana.addEventListener("change", () =>
   send({ type: "updateSettings", patch: { showFurigana: showFurigana.checked } })

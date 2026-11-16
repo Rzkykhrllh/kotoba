@@ -324,6 +324,21 @@
     .legend span::before { content: ""; display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 7px; vertical-align: middle; background: var(--c); }
     .legend span.dash::before { background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 7px); }
 
+    /* ---------- demo: furigana ---------- */
+    .fz .reader-top { background: #1f1d2b; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .fz-tog { display: inline-flex; align-items: center; gap: 8px; font: 600 12.5px var(--font); color: #fff; background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.18); border-radius: 99px; padding: 4px 11px 4px 5px; cursor: pointer; }
+    .fz-tog:hover { background: rgba(255,255,255,.16); }
+    .fz-tog:focus-visible { outline: 2px solid #93b4f8; outline-offset: 2px; }
+    .fz-tog .sw { width: 26px; height: 15px; border-radius: 99px; background: rgba(255,255,255,.28); position: relative; transition: background .25s; }
+    .fz-tog .sw::after { content: ""; position: absolute; left: 2px; top: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: transform .25s; }
+    .fz.on .fz-tog .sw { background: #2563eb; }
+    .fz.on .fz-tog .sw::after { transform: translateX(11px); }
+    .fz .reader-body { line-height: 2.5; }
+    .fz ruby { ruby-align: center; }
+    .fz rt { font-size: 0; font-weight: 500; color: var(--ink-2); opacity: 0; user-select: none; -webkit-user-select: none; transition: opacity .35s ease, font-size .35s ease; }
+    .fz.on rt { font-size: .5em; opacity: .85; transition-delay: var(--rd, 0s); }
+
     /* ---------- tour ---------- */
     .tour-row { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 72px; align-items: center; margin-top: 96px; }
     .tour-row.flip > :first-child { order: 2; }
@@ -444,6 +459,7 @@
         <a href="#bank">Your bank</a>
         <a href="#flashcards">Flashcards</a>
         <a href="#reader">Reader</a>
+        <a href="#furigana">Furigana</a>
         <a href="#install">Install</a>
         <a class="pill" href="https://github.com/Rzkykhrllh/kotoba/releases/latest">Download</a>
       </div>
@@ -452,9 +468,9 @@
 
   <div class="wrap">
     <div class="hero">
-      <a class="eyebrow" href="https://github.com/Rzkykhrllh/kotoba/releases/latest"><b>NEW</b> Kotoba Bank is now just Kotoba</a>
+      <a class="eyebrow" href="#furigana"><b>NEW</b> Furigana on any Japanese page</a>
       <h1>Learn Japanese vocabulary<br class="br" /> <em class="s">while you browse.</em></h1>
-      <p class="lead">Your own Japanese word bank, built from the words <i>you</i> meet. Kotoba brings them back as quick flashcards on the pages you read, and highlights them on every Japanese website.</p>
+      <p class="lead">Your own Japanese word bank, built from the words <i>you</i> meet. Kotoba brings them back as quick flashcards on the pages you read, highlights them on every Japanese website, and can put the reading above every kanji.</p>
       <div class="cta">
         <a class="btn primary" href="https://github.com/Rzkykhrllh/kotoba/releases/latest">Download for Chrome <span class="arr">→</span></a>
         <a class="btn ghost" href="#bank">See how it works</a>
@@ -467,7 +483,7 @@
       <div class="reveal"><b>5 sec</b><span>per pop-up review</span></div>
       <div class="reveal" style="--d:.08s"><b>100%</b><span>stored in your browser</span></div>
       <div class="reveal" style="--d:.16s"><b>0</b><span>accounts or servers</span></div>
-      <div class="reveal" style="--d:.24s"><b>280 KB</b><span>download, MIT licensed</span></div>
+      <div class="reveal" style="--d:.24s"><b>360 KB</b><span>download, MIT licensed</span></div>
     </div>
 
     <!-- How it works -->
@@ -648,6 +664,37 @@
       </div>
     </section>
 
+    <!-- Furigana -->
+    <section id="furigana">
+      <div class="feature flip">
+        <div>
+          <div class="head">
+            <span class="kicker reveal" style="--k: var(--shu)">Furigana</span>
+            <h2 class="reveal">Every kanji, <em class="s">readable.</em></h2>
+            <p class="sub reveal">Stuck on a word you can't even sound out? Switch on furigana and every Japanese page shows the reading above its kanji, the way graded readers do.</p>
+          </div>
+          <ul class="points" style="margin-top: 36px">
+            <li class="reveal"><div><b>On every page, automatically</b>News, blogs, video comments. Text that loads as you scroll gets furigana too.</div></li>
+            <li class="reveal" style="--d:.06s"><div><b>Readings that fit</b>Only the kanji get a reading: 食べる shows た over 食, never over <span style="white-space: nowrap">べる.</span> Pages that already have furigana are left as they are.</div></li>
+            <li class="reveal" style="--d:.12s"><div><b>Clean to copy, easy to undo</b>Readings stay out of copied text. Switch it off and the page goes back exactly as it was.</div></li>
+            <li class="reveal" style="--d:.18s"><div><b>One download, then offline</b>An 18 MB dictionary downloads once when you switch it on. After that, every page is read on your computer.</div></li>
+          </ul>
+        </div>
+        <div class="reveal" style="--d:.1s">
+          <div class="stage" style="--sc: var(--shu); --sc2: var(--hint)">
+            <div class="reader fz" id="fzDemo">
+              <div class="reader-top"><span>まちのニュース</span><button class="fz-tog" id="fzTog" type="button" aria-pressed="false"><span class="sw"></span>Furigana</button></div>
+              <div class="reader-body">
+                <h4><ruby>駅前<rt>えきまえ</rt></ruby>に<ruby>新<rt>あたら</rt></ruby>しい<ruby>図書館<rt>としょかん</rt></ruby></h4>
+                <ruby>先週<rt>せんしゅう</rt></ruby>、<ruby>駅前<rt>えきまえ</rt></ruby>に<ruby>新<rt>あたら</rt></ruby>しい<ruby>図書館<rt>としょかん</rt></ruby>が<ruby>開館<rt>かいかん</rt></ruby>しました。<ruby>三階<rt>さんがい</rt></ruby>には<ruby>静<rt>しず</rt></ruby>かな<ruby>自習室<rt>じしゅうしつ</rt></ruby>があり、<ruby>週末<rt>しゅうまつ</rt></ruby>は<ruby>家族<rt>かぞく</rt></ruby><ruby>連<rt>づ</rt></ruby>れで<ruby>賑<rt>にぎ</rt></ruby>わっています。
+              </div>
+            </div>
+          </div>
+          <p class="demo-note">Live demo. Click the switch to compare.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Tour -->
     <section id="features">
       <div class="head center">
@@ -773,12 +820,12 @@
       <h2>Start your <em class="s">own</em> word bank.</h2>
       <p>Free, private, and ready in a minute. The next Japanese page you open will look a little more familiar.</p>
       <a class="btn primary" href="https://github.com/Rzkykhrllh/kotoba/releases/latest">Download for Chrome <span class="arr">→</span></a>
-      <p class="note">Chrome on desktop · v1.3.0</p>
+      <p class="note">Chrome on desktop · v1.4.0</p>
     </div>
 
     <footer>
       <a class="brand" href="#"><span class="seal" aria-hidden="true">言</span>Kotoba</a>
-      <span>MIT licensed · Kanji data: KANJIDIC2 (EDRDG, CC BY-SA 4.0)</span>
+      <span>MIT licensed · Kanji data: KANJIDIC2 (EDRDG, CC BY-SA 4.0) · Furigana: kuromoji.js (Apache 2.0), IPAdic</span>
       <span><a href="https://github.com/Rzkykhrllh/kotoba">GitHub</a> · <a href="privacy.html">Privacy</a> · made by <a href="https://dev.byairu.com">dev.byairu.com</a></span>
     </footer>
   </div>
@@ -995,6 +1042,16 @@
       }
       whenVisible(rd, (v) => { visible = v; if (v) { rd.classList.add('lit'); if (!still) loop(); } });
       if (still) rd.classList.add('lit');
+    }
+
+    /* ---------- Furigana demo ---------- */
+    {
+      const fz = $('fzDemo'), btn = $('fzTog');
+      fz.querySelectorAll('rt').forEach((rt, i) => rt.style.setProperty('--rd', (i * 0.05) + 's'));
+      const set = (on) => { fz.classList.toggle('on', on); btn.setAttribute('aria-pressed', String(on)); };
+      let touched = false;
+      btn.addEventListener('click', () => { touched = true; set(!fz.classList.contains('on')); });
+      whenVisible(fz, (v) => { if (v && !touched) setTimeout(() => { if (!touched) set(true); }, still ? 0 : 900); });
     }
 
     /* ---------- Pace slider ---------- */
