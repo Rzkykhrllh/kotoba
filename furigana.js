@@ -24,7 +24,8 @@
 
   let on = false;
   const ours = new WeakSet();   // nodes this script created (text + <ruby>)
-  let groups = [];              // [{ orig: Text, nodes: Node[] }] for undo
+  let groups = new Set();       // { orig: Text, nodes: Node[] } — one per swapped-out text node
+  const groupOf = new WeakMap(); // orig Text -> its group
   let io = null;                // IntersectionObserver over parents of candidate text
   let watched = new WeakSet();  // elements currently observed by `io`
 
@@ -84,6 +85,7 @@
 
   let pending = [];   // text nodes waiting to be sent
   let flushing = false;
+  let failures = 0;     // consecutive failed annotate calls (for retry backoff)
 
   function queue(el) {
     for (let c = el.firstChild; c; c = c.nextSibling) {
@@ -108,9 +110,14 @@
         if (!batch.length) break;
         const res = await send({ type: "furiganaAnnotate", texts: batch.map((b) => b.text) });
         if (!res || !res.ok) {
-          if (res && res.reason === "no-dict") stop();
+          if (res && res.reason === "no-dict") { stop(); break; }
+          // Anything else (tokenizer failed to load, worker restarting): put
+          // the batch back and try again shortly, up to a few times.
+          pending.unshift(...batch.map((b) => b.node));
+          if (failures++ < 4) setTimeout(flush, 1000 * failures);
           break;
         }
+        failures = 0;
         if (!on) break;
         batch.forEach((b, i) => apply(b.node, b.text, res.results[i]));
       }
@@ -144,8 +151,49 @@
     }
     addText(text.slice(pos));
     node.replaceWith(frag);
-    groups.push({ orig: node, nodes });
+    const g = { orig: node, nodes };
+    groups.add(g);
+    groupOf.set(node, g);
+    // The page's own code may still hold `node`: put it back the moment it's
+    // used (see furigana-guard.js) or its text is changed.
+    if (!node.__kotobaFuriListening) {
+      node.__kotobaFuriListening = true;
+      node.addEventListener(RESTORE_EVT, onRestoreEvent);
+    }
+    origObserver.observe(node, { characterData: true });
   }
+
+  /* --------------------------- giving nodes back ------------------------ */
+
+  const RESTORE_EVT = "kotoba-furi-restore";
+
+  // Put the original text node back where our nodes are, and drop ours.
+  function restore(g) {
+    if (!groups.has(g)) return;
+    groups.delete(g);
+    groupOf.delete(g.orig);
+    const anchor = g.nodes.find((n) => n.isConnected);
+    if (anchor && !g.orig.isConnected) anchor.parentNode.insertBefore(g.orig, anchor);
+    for (const n of g.nodes) if (n.isConnected) n.remove();
+  }
+
+  // Fired by furigana-guard.js, synchronously, just before the page calls
+  // removeChild/insertBefore/replaceChild with this node.
+  function onRestoreEvent(e) {
+    const g = groupOf.get(e.target);
+    if (g) restore(g);
+  }
+
+  // The page changed the text of a node we'd swapped out (e.g. React updating
+  // a counter): show the new text, then annotate it again.
+  const origObserver = new MutationObserver((records) => {
+    for (const r of records) {
+      const g = groupOf.get(r.target);
+      if (!g) continue;
+      restore(g);
+      if (on && r.target.isConnected && r.target.parentElement) queue(r.target.parentElement);
+    }
+  });
 
   /* ------------------------------ on / off ------------------------------ */
 
@@ -174,13 +222,8 @@
     pending = [];
     // Put the original text nodes back, so the page's own references to them
     // (frameworks keep them) still point at what's on screen.
-    for (const g of groups) {
-      const first = g.nodes[0];
-      if (!first || !first.isConnected) continue;
-      first.parentNode.insertBefore(g.orig, first);
-      for (const n of g.nodes) n.remove();
-    }
-    groups = [];
+    for (const g of [...groups]) restore(g);
+    origObserver.disconnect();
   }
 
   let roots = new Set();
@@ -199,7 +242,20 @@
     }, 300);
   });
 
+  // Frameworks that render on the server and then "hydrate" (React, Vue…)
+  // expect the DOM to be untouched until they're done, so the first start
+  // waits for the load event plus a short pause — but never more than ~2 s,
+  // since heavy pages (ads, trackers) can take far longer to fire "load".
+  let settled = false;
+  const whenSettled = new Promise((resolve) => {
+    const done = () => { if (!settled) { settled = true; resolve(); } };
+    if (document.readyState === "complete") setTimeout(done, 700);
+    else window.addEventListener("load", () => setTimeout(done, 700), { once: true });
+    setTimeout(done, 2000);
+  });
+
   async function sync() {
+    if (!settled) await whenSettled;
     let s;
     try { s = await chrome.storage.local.get(["settings", "furiganaDict"]); }
     catch (_) { return; } // orphaned after an extension reload

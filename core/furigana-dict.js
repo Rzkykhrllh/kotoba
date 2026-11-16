@@ -99,8 +99,11 @@ function furiDownloadDict() {
           done += value.byteLength;
           await report(false);
         }
-        const blob = new Blob(chunks);
-        await furiDbTx("readwrite", (s) => s.put(blob, name));
+        // Stored as an ArrayBuffer, not a Blob: Chrome keeps big IndexedDB
+        // Blobs as lazy references, and reading them right after the service
+        // worker wakes up sometimes fails ("Failed to fetch").
+        const buf = await new Blob(chunks).arrayBuffer();
+        await furiDbTx("readwrite", (s) => s.put(buf, name));
       }
       furiTokenizer = null;
       return await furiSetStatus({ state: "ready", tag: FURI_DICT_TAG, bytes: done, installedAt: Date.now() });
@@ -128,10 +131,23 @@ async function furiRemoveDict() {
 /* ------------------------------ tokenizer ------------------------------ */
 
 // Called by the patched loader in lib/kuromoji.js for each dictionary file.
+// Retries a couple of times: dictionaries saved by v1.4 dev builds are Blobs,
+// whose reads can fail transiently (see the download loop).
 self.kuromojiLoadFile = async (name) => {
-  const blob = await furiDbTx("readonly", (s) => s.get(name));
-  if (!blob) throw new Error(`dictionary file missing: ${name}`);
-  return new Response(blob.stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+  for (let attempt = 0; ; attempt++) {
+    try {
+      let data = await furiDbTx("readonly", (s) => s.get(name));
+      if (!data) throw new Error(`dictionary file missing: ${name}`);
+      if (data instanceof Blob) {
+        data = await data.arrayBuffer();
+        furiDbTx("readwrite", (s) => s.put(data, name)).catch(() => {}); // upgrade in place
+      }
+      return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer();
+    } catch (e) {
+      if (attempt >= 2 || /missing/.test(e.message)) throw e;
+      await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+    }
+  }
 };
 
 function furiGetTokenizer() {
