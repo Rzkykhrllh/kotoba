@@ -85,7 +85,11 @@ function furiDownloadDict() {
       await report(true);
       for (const name of Object.keys(FURI_DICT_FILES)) {
         const res = await fetch(FURI_DICT_BASE + name, { cache: "no-store" });
-        if (!res.ok) throw new Error(`${name}: HTTP ${res.status}`);
+        if (!res.ok) {
+          const e = new Error(`${name}: HTTP ${res.status}`);
+          e.http = res.status;
+          throw e;
+        }
         const reader = res.body.getReader();
         const chunks = [];
         for (;;) {
@@ -101,7 +105,10 @@ function furiDownloadDict() {
       furiTokenizer = null;
       return await furiSetStatus({ state: "ready", tag: FURI_DICT_TAG, bytes: done, installedAt: Date.now() });
     } catch (e) {
-      return await furiSetStatus({ state: "error", error: `Download failed (${e.message || e}). Check your connection and try again.` });
+      const error = e.http
+        ? `Dictionary not available right now (HTTP ${e.http}). Try again later.`
+        : "Download failed. Check your connection and try again.";
+      return await furiSetStatus({ state: "error", error });
     } finally {
       furiDownload = null;
     }
