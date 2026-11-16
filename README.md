@@ -21,7 +21,7 @@ remember to open. Your reviews happen while you browse.
 
 ---
 
-## Two ways it keeps your words alive
+## Three ways it keeps your words alive
 
 ### 1. Flashcards that pop up while you browse
 Every few minutes, a card slides in on whatever page you're on: news, YouTube, your inbox. A kanji
@@ -33,7 +33,7 @@ doing.
 - Words you keep forgetting come back more often. Words you know come back less.
 - Classic (reveal → Know / Forgot) or Tiered mode (with a reading hint first).
 - Snooze it, drag it anywhere, tap a kanji to see its readings without leaving the page.
-- The toolbar shows a live countdown to the next card, with one-click switches for pop-ups and highlights.
+- The toolbar shows a live countdown to the next card, with one-click switches for pop-ups, highlights and furigana.
 
 ### 2. Your vocabulary, highlighted on every Japanese page
 Open any Japanese website and the words already in your bank are underlined, coloured by how well
@@ -46,6 +46,15 @@ learned, and every time you spot a word in the wild it sticks a little better.
 - Conjugated forms are recognised too: 食べた and 行った link back to 食べる and 行く.
 - Hover a word for its reading and *your* meaning, instantly.
 - Works on furigana sites like NHK News Easy. Never changes the page itself.
+
+### 3. Furigana on any page
+Stuck on a kanji you haven't learned yet? Switch on **Furigana on pages** and small readings appear
+above the kanji in any Japanese text: 映画館 gets えいがかん, 行った gets い. Readings follow the
+context (今日 is きょう, not こんにち), and copying text leaves them out.
+
+- Works together with the highlights: your words stay underlined, with furigana on top.
+- Runs on your computer. It needs a one-time 18 MB dictionary download, then works offline.
+- Turn it off and the page goes back to exactly how it was.
 
 ## Everything else you need
 
@@ -86,6 +95,8 @@ anywhere. Back up any time with Export JSON. Full [privacy policy](https://rzkyk
 - Kanji readings: [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) by the
   Electronic Dictionary Research and Development Group, used under
   [CC BY-SA 4.0](https://www.edrdg.org/edrdg/licence.html).
+- Furigana: [kuromoji.js](https://github.com/takuyaa/kuromoji.js) (Apache 2.0) with the
+  mecab-ipadic dictionary (see its NOTICE in the dictionary release).
 - Font: Zen Maru Gothic (SIL OFL 1.1). CSV parsing: Papa Parse (MIT).
 
 Made by [dev.byairu.com](https://dev.byairu.com).

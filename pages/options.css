@@ -571,3 +571,9 @@ html[data-theme="dark"] .btn.grade-know { color: #052e1a; }
   .study-card .front-kanji, .study-card .back-kanji { font-size: 54px; }
   .mode-grid, .pos-grid { grid-template-columns: 1fr; }
 }
+
+/* Furigana dictionary download bar (Settings → Furigana on pages). */
+.furi-progress { width: 180px; height: 4px; border-radius: 99px; background: var(--surface-2); overflow: hidden; margin-top: 8px; }
+.furi-progress[hidden] { display: none; }
+.furi-progress span { display: block; height: 100%; width: 0; background: var(--shu); transition: width .3s; }
+#furiDictLabel[data-tone="error"] { color: var(--miss, #dc2626); }

@@ -121,6 +121,30 @@
         </div>
       </section>
 
+      <section class="panel">
+        <h2>Furigana on pages</h2>
+        <div class="setting">
+          <label for="pageFurigana">Show readings above kanji <span class="label-note">e.g. 映画館 → えいがかん</span></label>
+          <label class="switch">
+            <input id="pageFurigana" type="checkbox" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="setting">
+          <div>
+            <label id="furiDictLabel">Dictionary</label>
+            <div class="furi-progress" id="furiProgress" hidden><span id="furiProgressFill"></span></div>
+          </div>
+          <button class="btn" id="furiDictBtn">Download</button>
+        </div>
+        <p class="hint">Readings are worked out on your computer by a Japanese tokenizer, so they follow the
+          context (今日 → きょう, 行った → いった). It needs a one-time dictionary download (about 18 MB) from
+          this project's GitHub page; after that it works offline. Readings are usually right but not always,
+          especially for names.</p>
+        <p class="hint">Tokenizer: <a href="https://github.com/takuyaa/kuromoji.js" target="_blank">kuromoji.js</a>
+          (Apache 2.0) with the mecab-ipadic dictionary.</p>
+      </section>
+
       <div class="settings-section-label">Flashcard popup</div>
 
       <section class="panel">

@@ -29,6 +29,9 @@ importScripts("core/srs.js");         // pickCard, applySM2, deriveStatus
 importScripts("core/kanji.js");       // extractKanjiList
 importScripts("core/db.js");          // IndexedDB words/groups layer
 importScripts("core/migrate.js");     // one-time chrome.storage.local -> IndexedDB migration
+importScripts("lib/kuromoji.js");     // Japanese tokenizer (furigana on pages)
+importScripts("core/furigana.js");    // furiSegments, furiFromTokens
+importScripts("core/furigana-dict.js"); // dictionary download + furiAnnotate
 
 const ALARM_NAME = "nihongo-tick";
 
@@ -45,6 +48,9 @@ const DEFAULT_SETTINGS = {
   readerHighlight: true,
   readerStatuses: ["new", "learning", "mastered"],
   readerIgnore: [], // word ids the user muted via the hover card's "Don't highlight"
+  // Furigana on pages (furigana.js). Off until the user turns it on, since it
+  // needs a one-time dictionary download (core/furigana-dict.js).
+  pageFurigana: false,
 };
 
 // in-memory only; used to avoid showing the same card twice in a row.
@@ -556,11 +562,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         sendResponse({
           enabled: settings.enabled !== false,
           readerHighlight: settings.readerHighlight !== false,
+          pageFurigana: !!settings.pageFurigana,
           nextAt,
           periodMs,
           snoozeUntil,
           cardShowing: !!currentCard, // a new card won't show until this one is graded
         });
+        break;
+      }
+      case "furiganaStatus": {
+        sendResponse(await furiStatus());
+        break;
+      }
+      case "furiganaDownload": {
+        // Resolves when the download finishes; callers follow progress through
+        // chrome.storage.local "furiganaDict" instead of waiting on this.
+        sendResponse(await furiDownloadDict());
+        break;
+      }
+      case "furiganaRemove": {
+        await saveSettings({ pageFurigana: false });
+        await furiRemoveDict();
+        sendResponse({ ok: true });
+        break;
+      }
+      case "furiganaAnnotate": {
+        const st = await furiStatus();
+        if (st.state !== "ready") { sendResponse({ ok: false, reason: "no-dict" }); break; }
+        try {
+          sendResponse({ ok: true, results: await furiAnnotate(msg.texts || []) });
+        } catch (e) {
+          sendResponse({ ok: false, reason: String(e && e.message || e) });
+        }
         break;
       }
       case "getSheetTabs": {

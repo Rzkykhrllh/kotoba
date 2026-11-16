@@ -9,6 +9,8 @@ const cdFillEl = document.getElementById("cdFill");
 const controlsEl = document.querySelector(".controls");
 const popupToggle = document.getElementById("popupToggle");
 const highlightToggle = document.getElementById("highlightToggle");
+const furiganaToggle = document.getElementById("furiganaToggle");
+const furiSubEl = document.getElementById("furiSub");
 const quizBtn = document.getElementById("quizBtn");
 const addWordShortcut = document.getElementById("addWordShortcut");
 const openBankBtn = document.getElementById("openBankBtn");
@@ -90,6 +92,8 @@ async function loadSchedule() {
   if (!schedule) return;
   popupToggle.checked = schedule.enabled;
   highlightToggle.checked = schedule.readerHighlight;
+  furiganaToggle.checked = schedule.pageFurigana;
+  renderFuri();
   renderCountdown();
 }
 
@@ -139,6 +143,50 @@ popupToggle.addEventListener("change", async () => {
 highlightToggle.addEventListener("change", () =>
   send({ type: "updateSettings", patch: { readerHighlight: highlightToggle.checked } })
 );
+
+/* ------------------------------ furigana -------------------------------- */
+// Needs a one-time dictionary download (background.js → core/furigana-dict.js).
+// Turning the switch on starts it if needed; progress arrives through
+// chrome.storage.local "furiganaDict", and furigana.js in each tab starts by
+// itself once the dictionary is ready.
+let furiDict = { state: "none" };
+
+function renderFuri() {
+  const st = furiDict.state;
+  let text = "", tone = "";
+  if (st === "downloading") text = `Downloading dictionary… ${Math.round((furiDict.progress || 0) * 100)}%`;
+  else if (st === "error") { text = furiDict.error || "Download failed."; tone = "error"; }
+  else if (st !== "ready" && !furiganaToggle.checked) text = "One-time 18 MB download";
+  furiSubEl.textContent = text;
+  furiSubEl.hidden = !text;
+  if (tone) furiSubEl.dataset.tone = tone; else delete furiSubEl.dataset.tone;
+}
+
+async function loadFuri() {
+  furiDict = (await send({ type: "furiganaStatus" })) || { state: "none" };
+  renderFuri();
+}
+
+furiganaToggle.addEventListener("change", async () => {
+  const want = furiganaToggle.checked;
+  await send({ type: "updateSettings", patch: { pageFurigana: want } });
+  if (want && furiDict.state !== "ready" && furiDict.state !== "downloading") {
+    send({ type: "furiganaDownload" }); // don't await: it runs for a while
+  }
+  renderFuri();
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local" || !changes.furiganaDict) return;
+  furiDict = changes.furiganaDict.newValue || { state: "none" };
+  if (furiDict.state === "error") {
+    furiganaToggle.checked = false;
+    send({ type: "updateSettings", patch: { pageFurigana: false } });
+  }
+  renderFuri();
+});
+
+loadFuri();
 
 quizBtn.addEventListener("click", async () => {
   await send({ type: "showNow" });

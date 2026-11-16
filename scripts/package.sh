@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-if ! git diff --quiet HEAD -- manifest.json background.js content.js reader.js core data icons lib pages; then
+if ! git diff --quiet HEAD -- manifest.json background.js content.js reader.js furigana.js core data icons lib pages; then
   echo "Uncommitted changes in extension files — commit first (the zip is built from HEAD)." >&2
   exit 1
 fi
@@ -16,7 +16,7 @@ mkdir -p dist
 rm -f "$OUT"
 
 git archive --format=zip --prefix="kotoba-v${VERSION}/" -o "$OUT" HEAD \
-  manifest.json background.js content.js reader.js LICENSE core data icons lib pages
+  manifest.json background.js content.js reader.js furigana.js LICENSE core data icons lib pages
 
 echo "Built $OUT ($(du -h "$OUT" | cut -f1))"
 unzip -l "$OUT" | tail -1
